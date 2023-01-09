@@ -1,6 +1,6 @@
-# [CS2102](https://github.com/jontmy/cs2105/blob/master/src/cs2102.pdf) #
+# [CS2102](https://github.com/jontmy/cs2102/blob/master/src/cs2102.pdf) #
 
-**Download the notes from the [releases page](https://github.com/jontmy/cs2102/releases), or view the latest version [here](https://github.com/jontmy/cs2105/blob/master/src/cs2102.pdf).**
+**Download the notes from the [releases page](https://github.com/jontmy/cs2102/releases), or view the latest version [here](https://github.com/jontmy/cs2102/blob/master/src/cs2102.pdf).**
 
 ## Database Systems ##
 
