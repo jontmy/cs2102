@@ -1,0 +1,36 @@
+\part{Relational Model}
+
+Data in \textbf{relational databases} are stored in \textbf{relations} (tables).
+Column headers are \textbf{attributes}, and rows are \textbf{tuples}.
+
+The \textbf{degree} is the number of columns, and the \textbf{cardinality} is the number of rows.
+
+The \textbf{domain} of an attribute $A_i$, denoted as $\operatorname*{dom}(A_i)$,
+is the set of all possible \textit{atomic} values for $A_i$.
+\code{NULL} is an additional special value for unknown or invalid values.
+
+
+\begin{defn}{keys}
+    A \textbf{superkey} is a subset of attributes that uniquely identifies a tuple.
+    A \textbf{key} is a \textit{minimal} superkey.
+
+    The \textbf{candidate keys} is the set of all keys for a relation, of which
+    one is selected as a \textbf{primary key}.
+
+    Primary key values must be non-\code{NULL}.
+\end{defn}
+
+\begin{defn}{foreign keys}
+    A \textbf{foreign key} is a subset of attributes of a \textit{referencing relation}
+    that refers to the primary key of a \textit{referenced relation}:
+
+    (referencing attributes) $\rightsquigarrow$ (referenced attributes)
+
+    Because the names of the attributes are not necessarily unique,
+    each attribute is prefixed with the name of the relation, like so:
+
+    (<relation name> $\cdot$ <attribute name>, ...) $\rightsquigarrow$ ...
+
+    Foreign keys must appear as a primary key in the referenced table,
+    \code{NULL}, or a tuple containing \code{NULL}.
+\end{defn}

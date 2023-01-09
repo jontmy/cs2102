@@ -150,17 +150,17 @@
 \date{Last updated on \today}
 
 \begin{document}
-    \linespread{1.4}\selectfont
-    \pagenumbering{gobble} % remove page numbering for content pages
-    \maketitle
-    \pageline{1.5pt}
-    \tableofcontents
-    \pageline{1.5pt}
-    \linespread{1.1}\selectfont
+\linespread{1.4}\selectfont
+\pagenumbering{gobble} % remove page numbering for content pages
+\maketitle
+\pageline{1.5pt}
+\tableofcontents
+\pageline{1.5pt}
+\linespread{1.1}\selectfont
 
-    \newpage
-    \pagenumbering{arabic} % re-add page numbering
-    \begin{multicols*}{2}
-
-    \end{multicols*}
+\newpage
+\pagenumbering{arabic} % re-add page numbering
+\begin{multicols*}{2}
+    \input{relational-model.tex}
+\end{multicols*}
 \end{document}
