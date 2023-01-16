@@ -34,3 +34,140 @@ is the set of all possible \textit{atomic} values for $A_i$.
     Foreign keys must appear as a primary key in the referenced table,
     \code{NULL}, or a tuple containing \code{NULL}.
 \end{defn}
+
+The key constraints above are not intrisic properties of a relation; rather, they are specified by the database designer to avoid problematic but otherwise valid data.
+
+\section{Relational Algebra}
+
+Relation are always the \textbf{operands} in relational algebra, on which \textbf{operators} are applied.
+
+Because relations are closed under \textit{any combination of operators}, the result of an operation is \textit{always} a relation, and no other output is possible (\textbf{closure property}).
+
+\begin{defn}{3-valued logic (\code{false}, \code{true}, and \code{NULL})}
+    For any boolean values $a$ and $b$, if \textit{either} $a$ \textit{or} $b$ is \code{NULL}, then $a \land b = \code{NULL}$ and $a \lor b = \code{NULL}$.
+
+    Otherwise, evaluate as per usual.
+
+    Any operation involving \code{NULL} will result in \code{NULL}.
+    Hence, $\equiv$ and $\not\equiv$ are needed to compare (in)equality of \code{NULL} values directly:
+
+    \code{NULL} = \code{NULL} produces \code{NULL}, but \code{NULL} $\equiv$ \code{NULL} produces \code{true}.
+\end{defn}
+
+\subsection{Equivalence}
+Two expressions are \textbf{equivalent} if either \textit{both} produce an error, or \textit{both} produce the same result.
+
+Errors occur if attributes are missing (e.g. by projection or renaming), or
+are incompatible --- there is no implicit type conversion.
+
+The order of types in a tuple matters --- (\code{int}, \code{text}) is not equivalent to (\code{text}, \code{int}).
+
+\subsection{Basic Operators}
+Note that logical conjunction ($\land$) has greater precedence than logical disjunction ($\lor$).
+
+\begin{defn}{selection --- $\sigma_{[c]}(R)$}
+    Filters the rows of relation $R$, returning the set of tuples that satisfy the condition $c$.
+
+    Conditions which evaluate to \code{NULL} are excluded from the result.
+
+    The condition $c$ must only specify attributes of $R$.
+\end{defn}
+
+\begin{defn}{projection --- $\pi_{[l]}(R)$}
+    Maps the relation $R$, returning the set of tuples with the attributes in the ordered list $l$, in the order specified by $l$.
+
+    Equivalent to a column filter, but the rows which were previously unique tuples may no longer be unique, and are therefore de-duplicated.
+
+    The elements of $l$ must not be operations, must be attributes of $R$, and must be unique.
+\end{defn}
+
+\begin{defn}{renaming --- $\rho_{[\mathcal{R} ]}(R)$}
+    Renames the attributes of relation $R$ to the attributes in the unordered list $\mathcal{R}$.
+
+    Elements of $\mathcal{R}$ must be in the following form: \\
+    $\text{<new name>} \leftarrow \text{<old name>}$.
+
+    New attribute names must be unique, and existing attributes must only be renamed at most once per operation (i.e. $\rho_{[A \leftarrow B, B \leftarrow C]}$ is invalid).
+\end{defn}
+
+\subsection{Set Operators}
+The typical set union ($\cup$), set intersection ($\cap$), and set difference ($-$) operators are omitted for brevity.
+
+\begin{defn}{cross product --- $R \times S$}
+    For every tuple in $R$, concatenate it with every tuple in $S$ to form a new relation, such that the cardinality (number of rows) of the result is $|R| \times |S|$.
+
+    The set of attributes in $R$ and $S$ must be disjoint, such that the degree (number of columns) of the result is $\operatorname*{deg}(R) + \operatorname*{deg}(S)$.
+
+    Cross products are associative --- $R \times (S \times T) = (R \times S) \times T$.
+\end{defn}
+
+\subsection{Join Operators}
+\textbf{Joins} are a composite operator, composing cross product, selection, and projection on a relation.
+
+This concatenates two tables and removes unwanted/redundant rows and columns from the result of a cross product.
+
+\begin{defn}{theta-join ($\theta$-join) --- $R \Join_{[\theta]} S$}
+    Cross $R$ and $S$, then filter (by selection) the rows using the condition $\theta$.
+\end{defn}
+
+\begin{defn}{equi-join --- $R \Join_= S$}
+    A special case of theta-join, where only equality ($=$) conditions are allowed (c.f. $\theta$-join which allows $\equiv$, $\le$, $<>$, etc.).
+
+    This may be more performant versus a theta-join as hashing can be used internally.
+\end{defn}
+
+\begin{defn}{natural inner join --- $R \Join S$}
+    First, find the set of attributes that are common to both $R$ and $S$.
+
+    Then, cross $R$ and $S$, and retain (by selection) the rows for which the \textbf{common attributes} are equal --- this also eliminates rows with any \code{NULL} value.
+    
+    If there are no common attributes, then this is simply the cross product (by vacuous truth).
+
+    Finally, de-duplicate (by projection) the columns by their attribute names.
+
+\end{defn}
+
+Theta-joins, equi-joins, and natural inner joins are collectively known as \textbf{inner joins}.
+
+If we wish to perform a join but still retain \textit{all rows} from the \textit{left} table, \textit{right} table, or even \textit{both} tables and simply pad missing values with \code{NULL}, we can use \textbf{outer joins}.
+
+\begin{defn}{full outer join --- $L \fullouterjoin_{[\theta]} R$}
+    \begin{tblr}{
+        colspec = {Xl|Xl},
+        cell{1}{1,3} = {c=2}{l},
+        row{2,3} = {m_red!20},
+        row{4,5} = {m_green!20},
+        row{6,7} = {m_blue!20}
+      }
+      \hline[2pt]
+        \textbf{attributes of $L$} && \textbf{attributes of $R$} \\
+      \hline[1pt]
+            values from $L$ & $\cdots$ & values from $R$ & ... \\
+            $\vdots$ & $\ddots$ & $\vdots$ & $\ddots$ \\
+            values from $L$ & ... & \code{NULL} & ... \\
+            $\vdots$ & $\ddots$ & $\vdots$ & $\ddots$ \\
+            \code{NULL} & ... & values from $R$ & ... \\
+            $\vdots$ & $\ddots$ & $\vdots$ & $\ddots$ \\
+      \hline[2pt]
+    \end{tblr}
+
+    Inner joins only retain rows (in \textcolor{m_red}{red}) from which both $L$ and $R$ have a value for which the condition $\theta$ evaluates to \code{true} (during the selection).
+
+    However, rows (in \textcolor{m_green}{green} and \textcolor{m_blue}{blue}) which do not satisfy $\theta$ may also be desirable, and can be retained by outer joins.
+
+    The \textbf{full outer join} retains all of the rows above.
+\end{defn}
+
+\begin{defn}{left outer join --- $L \leftouterjoin_{[\theta]} R$}
+    The left outer join retains the \textcolor{m_red}{red} and \textcolor{m_green}{green} rows.
+\end{defn}
+
+\begin{defn}{right outer join --- $L \rightouterjoin_{[\theta]} R$}
+    The left outer join retains the \textcolor{m_red}{red} and \textcolor{m_blue}{blue} rows.
+\end{defn}
+
+\begin{defn}{natural outer joins}
+    The natural keyword can be prefixed to the left, right, or full outer joins, e.g. "natural left outer join".
+
+    The equality condition is implicitly defined over the set of attributes that are common to both $L$ and $R$.
+\end{defn}
