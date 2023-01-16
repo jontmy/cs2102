@@ -94,13 +94,15 @@ Because relations are closed under \textit{any combination of operators}, the re
     \end{tblr}
 \end{defn}
 
-\subsection{Equivalence}
-Two expressions are \textbf{equivalent} if either \textit{both} produce an error, or \textit{both} produce the same result.
+\subsection{Equivalence and Compatibility}
+Two \textit{expressions} are \textbf{equivalent} if either \textit{both} produce an error, or \textit{both} produce the same result.
 
 Errors occur if attributes are missing (e.g. by projection or renaming), or
 are incompatible --- there is no implicit type conversion.
 
 The order of types in a tuple matters --- (\code{int}, \code{text}) is not equivalent to (\code{text}, \code{int}).
+
+Two \textit{relations} are \textbf{union-compatible} if they have the same number of attributes with the same domain (type).
 
 \subsection{Basic Operators}
 Note that logical conjunction ($\land$) has greater precedence than logical disjunction ($\lor$).
