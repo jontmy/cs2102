@@ -44,14 +44,54 @@ Relation are always the \textbf{operands} in relational algebra, on which \textb
 Because relations are closed under \textit{any combination of operators}, the result of an operation is \textit{always} a relation, and no other output is possible (\textbf{closure property}).
 
 \begin{defn}{3-valued logic (\code{false}, \code{true}, and \code{NULL})}
-    For any boolean values $a$ and $b$, if \textit{either} $a$ \textit{or} $b$ is \code{NULL}, then $a \land b = \code{NULL}$ and $a \lor b = \code{NULL}$.
-
-    Otherwise, evaluate as per usual.
-
     Any operation involving \code{NULL} will result in \code{NULL}.
     Hence, $\equiv$ and $\not\equiv$ are needed to compare (in)equality of \code{NULL} values directly:
 
     \code{NULL} = \code{NULL} produces \code{NULL}, but \code{NULL} $\equiv$ \code{NULL} produces \code{true}.
+
+    \begin{tblr}{
+        colspec={XX||XXX},
+        hlines, vlines,
+        row{1,2} = {font=\bfseries},
+        column{1,2} = {font=\bfseries},
+        cell{1}{1} = {c=2,r=2}{c},
+        cell{1}{3} = {c=3}{c},
+        cell{3}{1} = {r=3}{c},
+        cell{4}{2,3,4,5} = {m_red!20},
+        cell{2,3,4,5}{4} = {m_red!20},
+        cell{2,3}{3} = {m_green!20},
+        cell{3}{2} = {m_green!20},
+        cell{5}{2,3,5} = {m_blue!20},
+        cell{2,3,5}{5} = {m_blue!20},
+    }
+        $a \land b$ & & $a$ \\
+        & & \code{true} & \code{false} & \code{NULL} \\ \hline
+        $b$ & \code{true} & \code{true} & \code{false} & \code{NULL} \\
+        & \code{false} & \code{false} & \code{false} & \code{false} \\
+        & \code{NULL} & \code{NULL} & \code{false} & \code{NULL}
+    \end{tblr}
+
+    \begin{tblr}{
+        colspec={XX||XXX},
+        hlines, vlines,
+        row{1,2} = {font=\bfseries},
+        column{1,2} = {font=\bfseries},
+        cell{1}{1} = {c=2,r=2}{c},
+        cell{1}{3} = {c=3}{c},
+        cell{3}{1} = {r=3}{c},
+        cell{2}{4} = {m_red!20},
+        cell{4}{2,4} = {m_red!20},
+        cell{3}{2,3,4,5} = {m_green!20},
+        cell{2,3,4,5}{3} = {m_green!20},
+        cell{5}{2,4,5} = {m_blue!20},
+        cell{2,4,5}{5} = {m_blue!20},
+    }
+        $a \lor b$ & & $a$ \\
+        & & \code{true} & \code{false} & \code{NULL} \\ \hline
+        $b$ & \code{true} & \code{true} & \code{true} & \code{true} \\
+        & \code{false} & \code{true} & \code{false} & \code{NULL} \\
+        & \code{NULL} & \code{true} & \code{NULL} & \code{NULL}
+    \end{tblr}
 \end{defn}
 
 \subsection{Equivalence}
