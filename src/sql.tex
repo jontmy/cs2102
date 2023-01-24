@@ -1,0 +1,112 @@
+\part{SQL}
+\textbf{SQL} (Structured Query Language) is case-insensitive, but keywords are uppercase by convention.
+
+The most common data types are \code{INTEGER}, \code{VARCHAR(n)}, \code{BOOLEAN}, and \code{DATE}.
+
+\section{Operations and Syntax}
+
+\subsection{Table Operations}
+\begin{lstlisting}
+CREATE TABLE table_name (
+    -- define attributes (columns)
+    <attribute> <type> [<column_constraint>],
+    <attribute> <type> [CONSTRAINT <name> <cstr.>],
+    ...
+    -- define optional table constraints
+    [<table_constraint>],
+    -- constraints can be named
+    [CONSTRAINT <name> <table_constraint>],
+    ... /* alternative comment syntax */
+    [<table_constraint>] -- no trailing comma
+);
+
+ALTER TABLE <table>
+    [ALTER / ADD / DROP] [COLUMN / CONSTRAINT]
+    <attribute / name>
+    <changes>;
+
+DROP TABLE
+    [IF EXISTS] -- no error if table doesn't exist
+    <table>, ... -- drop multiple tables at once
+    [CASCADE]; -- also drop referencing tables
+\end{lstlisting}
+
+\subsection{Integrity Constraints}
+Constraints are specified in the \code{CREATE TABLE} statement,
+and reject insertions if the condition evaluates to \code{false} (\textbf{principle of rejection}).
+
+\textbf{Column constraints} are defined on a per-column basis, while \textbf{table constraints} are defined on the table as a whole.
+
+Constraints can be \textit{named}, or \textit{unnamed}, in which case the DBMS will generate a name.
+
+There are 5 types of constraints that can be placed on a table $R$ and/or any attribute $a$:
+\begin{enumerate*}
+    \keyitem*{\code{NOT NULL}}{$\forall r \in R: r_a \not\equiv \code{NULL}$}
+    \keyitem*{\code{UNIQUE}}{$\forall r_1, r_2 \in R: (r_1 \equiv r_2) \lor (\exists r_{1_a} <> r_{2_a})$}
+    \keyitem*{\code{PRIMARY KEY}}{equivalent to \code{UNIQUE} and \code{NOT NULL}}
+    \keyitem{\code{FOREIGN KEY ($a, ...$) REFERENCES $R'$($a', ...$)}}{$\forall r \in R: (\forall a: r_a \in R_{a'}') \lor (\code{NULL} \in r)$}
+    \keyitem*{\code{CHECK($c$)}}{$c$ does not evaluate to \code{false}}
+\end{enumerate*}
+
+For \code{UNIQUE}, note that \code{NULL} $<>$ \code{NULL} evaluates to \code{NULL},
+such that duplicate insertions of \code{NULL} are not rejected.
+
+For \code{FOREIGN KEY}, $R'$ must be a valid table name. \\
+\code{SET NULL}, \code{SET DEFAULT}, or \code{CASCADE} can be specified as the action to take when a referenced row is deleted.
+
+\code{CASCADE} will delete all referencing rows, propagating the deletion, which may significantly affect performance.
+
+For \code{CHECK}, $c$ must be a boolean expression scoped to the table on individual rows.
+
+\subsection{Row Operations}
+\begin{lstlisting}
+INSERT INTO <table> [(attribute, ...)]
+    VALUES -- whitespace and newlines optional
+        (value, ...),
+        (value, ...),
+        ... -- alternatively, all on one line
+        (value, ...);
+\end{lstlisting}
+
+All values to insert must have the same shape as either the table, or, if specified, the attribute list.
+
+Attributes in the attribute list can be in any order.
+
+Attributes missing from the attribute list will have their values set to \code{NULL}, or, if specified in the schema, to their default value.
+
+\begin{lstlisting}
+DELETE FROM <table> [WHERE <condition>];
+\end{lstlisting}
+
+The condition only deletes rows which evaluate to \code{TRUE} (\textbf{principle of acceptance}).
+
+If the condition is omitted, all rows will be deleted.
+
+The condition must be a boolean expression scoped to to the table on individual rows.
+
+\subsection{Deferrable Constraints}
+\begin{lstlisting}
+BEGIN; -- start a transaction
+-- perform operations
+COMMIT; -- commit (end) the transaction
+\end{lstlisting}
+
+Constraints are checked immediately at the end of every SQL statement (these end with a semicolon) and transaction --- violation performs a rollback.
+
+When defining a constraint, three deferments can be specified:
+\begin{enumerate*}
+    \keyitem{\code{NOT DEFERRABLE}}{if unspecified, this is the default}
+    \keyitem{\code{DEFFERABLE INITIALLY IMMEDIATE}}{constraint is checked immediately, but can be deferred later}
+    \keyitem{\code{DEFFERABLE INITIALLY DEFERRED}}{constraint is deferred by default}
+\end{enumerate*}
+
+\code{DEFFERABLE INITIALLY IMMEDIATE} gives the \textit{option} to defer the constraint checking by adding the following line in a transaction, i.e.:
+
+\begin{lstlisting}
+BEGIN;
+SET CONSTRAINTS <name> DEFERRED; -- add this line
+-- perform operations
+COMMIT;
+\end{lstlisting}
+
+Deferring a constraint is necessary when the constraint depends on a row that is inserted later in the transaction, e.g. circular foreign key constraints.
