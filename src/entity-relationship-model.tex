@@ -1,0 +1,108 @@
+\section{Entity Relationship Model}
+In the ER model, data is described as a collection of:
+\begin{itemize*}
+    \keyitem{entities}{representation of real-world objects that are distinguishable from other objects}
+    \keyitem{relationships}{associations between one or more entities}
+\end{itemize*}
+
+Entities and relationships of the same type form \textbf{entity sets} and \textbf{relationship sets} respectively.
+
+\textbf{Attributes} describe information about entities and relationships, and there are various kinds:
+\begin{itemize}
+    \keyitem*{key}{uniquely identify an entity}
+    \keyitem*{composite}{collection of multiple \textit{attributes}}
+    \keyitem*{multivalued}{collection of multiple possible \textit{values}}
+    \keyitem*{derived}{calculated from other attributes}
+\end{itemize}
+
+\vspace{1em}
+\begin{tikzpicture}[
+    auto,
+    node distance=1cm,
+    every entity/.style={fill=m_blue!20,draw=m_blue,thick},
+    every attribute/.style={fill=m_green!20,draw=m_green,thick},
+    every relationship/.style={fill=m_red!20,draw=m_red,thick,aspect=1.5}]
+]
+    \node[entity] (node1) {entity set}
+    [grow=up,sibling distance=4cm]
+    child[grow=up] {node[attribute] (composite) {composite attr.}}
+    child[grow=left,level distance=2.5cm] {node[attribute] {\underline{key attr.}}};
+
+    \node[attribute] (simple1) [above left = of composite] {attribute};
+    \path (simple1) edge node {} (composite);
+    \node[attribute] (simple2) [above = of composite] {attribute};
+    \path (simple2) edge node {} (composite);
+    \node[attribute] (simple3) [above right = of composite] {attribute};
+    \path (simple3) edge node {} (composite);
+
+    \node[relationship] (rel1) [below = of node1] {relationship};
+    \node[entity] (node2) [above right = of rel1] {entity set}
+    [grow=right,sibling distance=3cm]
+    child {node[attribute, double] {multivalued}}
+    child {node[attribute, dashed] {derived attr.}};
+
+    \path (rel1) edge node {role label} (node1) edge node {} (node2);
+\end{tikzpicture}
+\vspace{1em}
+
+The \textbf{degree} (or \textit{arity}) of a relationship set is the number of entity sets involved --- binary for $n = 2$, ternary for $n = 3$.
+
+\subsection{Relationship Constraints}
+
+\begin{defn}{cardinality constraints}
+    Relationships can be \textbf{many-to-many}, \textbf{many-to-one}, or \textbf{one-to-one}. These are \textit{upper bounds}.
+
+    The default upper limit is $\infty$, and setting an upper limit of $1$ is depicted in ER diagrams by an arrowhead:
+
+    \vspace{0.5em}
+    \begin{tikzpicture}[
+        auto,
+        node distance=1cm,
+        every entity/.style={fill=m_blue!20,draw=m_blue,thick},
+        every attribute/.style={fill=m_green!20,draw=m_green,thick},
+        every relationship/.style={fill=m_red!20,draw=m_red,thick,aspect=1.5}]
+    ]
+        \node[entity] (E) {entity set};
+        \node[relationship] (R) [right = of E] {relationship};
+        \path[{Stealth[length=3mm, width=2mm]}-] (R) edge node {} (E);
+    \end{tikzpicture}
+\end{defn}
+
+\begin{defn}{participation constraints}
+    Participation constraints can be \textbf{partial} (0 or more) or \textbf{total} (1 or more). These are \textit{lower bounds}.
+
+    The default lower limit is $0$, and setting a lower limit of $1$ is depicted in ER diagrams by a double line:
+
+    \vspace{0.5em}
+    \begin{tikzpicture}[
+        auto,
+        node distance=1cm,
+        every entity/.style={fill=m_blue!20,draw=m_blue,thick},
+        every attribute/.style={fill=m_green!20,draw=m_green,thick},
+        every relationship/.style={fill=m_red!20,draw=m_red,thick,aspect=1.5}]
+    ]
+        \node[entity] (E) {entity set};
+        \node[relationship] (R) [right = of E] {relationship};
+        \path (R) edge[double distance = 1.5 pt, black] node {} (E);
+    \end{tikzpicture}
+\end{defn}
+
+\begin{defn}{dependency constraint}
+    A \textbf{weak entity set} does not have its own key, instead having a \textbf{partial key} which can only uniquely identify entities with a primary key from its \textbf{owner entity set}.
+
+    This requires a connection via an \textbf{identifying relationship set}:
+
+    \begin{tikzpicture}[
+        auto,
+        node distance=1cm,
+        every entity/.style={fill=m_blue!20,draw=m_blue,thick},
+        every attribute/.style={fill=m_green!20,draw=m_green,thick},
+        every relationship/.style={fill=m_red!20,draw=m_red,thick,aspect=1.5}]
+    ]
+        \node[entity, double] (E) {weak entity set};
+        \node[relationship] (R) [above right = of E] {relationship};
+        \path[{Stealth[length=3mm, width=2mm]}-] (R) edge[double distance = 1.5 pt, black] node {} (E);
+        \node[entity] (O) [right = of E] {owner entity set};
+        \path (R) edge node {} (O);
+    \end{tikzpicture}
+\end{defn}

@@ -164,6 +164,10 @@
 \def\rightouterjoin{\mathbin{\bowtie\mkern-5.8mu\ojoin}}
 \def\fullouterjoin{\mathbin{\ojoin\mkern-5.8mu\bowtie\mkern-5.8mu\ojoin}}
 
+% ER diagrams
+\usepackage{tikz}
+\usetikzlibrary{er,positioning,arrows.meta}
+
 \color{body}
 \pagecolor{background}
 \frenchspacing
@@ -184,7 +188,9 @@
 \newpage
 \pagenumbering{arabic} % re-add page numbering
 \begin{multicols*}{2}
-    \include{relational-model.tex}
+    \part{Relational and ER Models}
+    \input{relational-model.tex}
+    \include{entity-relationship-model.tex}
     \include{sql.tex}
 \end{multicols*}
 \end{document}
