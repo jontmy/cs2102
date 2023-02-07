@@ -110,3 +110,122 @@ COMMIT;
 \end{lstlisting}
 
 Deferring a constraint is necessary when the constraint depends on a row that is inserted later in the transaction, e.g. circular foreign key constraints.
+
+
+\section{Queries}
+SQL by default does not eliminate duplicate rows (without \code{DISTINCT}) nor does it have a fixed row ordering (\textbf{order-independent}) (without \code{ORDER BY}).
+
+The basic query syntax is as follows:
+\begin{lstlisting}
+SELECT [DISTINCT] <attributes> -- * or a1, a2, ...
+    FROM <tables> -- r1, r2, ...
+    WHERE <conditions> -- c
+    ORDER BY <attributes> <ASC / DESC>
+    OFFSET <n>
+    LIMIT <n>; -- ; only if nothing else follows
+[[UNION / INTERSECT / EXCEPT] [ALL]]
+    ... -- more queries
+\end{lstlisting}
+
+\code{DISTINCT} uses \code{IS DISTINCT FROM} to compare rows, which is different from \code{=}.
+The latter returns \code{NULL} if either argument is \code{NULL}, while the former treats \code{NULL} like any other value.
+
+Condition evaluation is based on the \textbf{principle of acceptance} --- rows are included if and only if the condition evaluates to \code{TRUE}.
+
+The above query up to line 3 is equivalent to the following relational algebra expression:
+
+$ \pi_{[a_1, a_2, \dots]} \left(\sigma_{[c]} (r_1 \times r_2 \times ...) \right) $
+
+\begin{defn}{\code{SELECT} and \code{FROM} clauses --- \code{AS} expression}
+    Rename columns or tables (within the query scope) with \code{AS}, and even operate on entire columns with several functions:
+    \begin{itemize}
+        \keyitem*{mathematical}{\code{+ - * / \% |/ \^}}
+        \keyitem*{logical}{\code{AND, OR, NOT}}
+        \keyitem*{string}{\code{||, LOWER(s), UPPER(s)}}
+        \keyitem*{date}{\code{+, NOW()}}
+    \end{itemize}
+
+    \begin{lstlisting}
+SELECT <regular attributes> -- a1, a2, ...
+    [<expression> AS <new attribute>], -- ...
+FROM <regular tables>,
+    [<old table name> [AS] <new table name>];
+    \end{lstlisting}
+
+    Renaming tables is necessary if the same table appears more than once in the \code{FROM} clause.
+    
+    The \code{AS} keyword is optional when used in \code{FROM} clauses.
+\end{defn}
+
+\begin{defn}{\code{WHERE} clause}
+    Pattern match (or with regex) with \code{LIKE} and \code{NOT LIKE} as a condition:
+    \begin{itemize}
+        \item an underscore (\code{\_}) matches exactly 1 character,
+        \item \code{\%} matches 0 or more characters.
+    \end{itemize}
+
+    \begin{lstlisting}
+SELECT <attributes>
+FROM <tables>
+WHERE <attribute> [[NOT] LIKE '<pattern>'];
+    \end{lstlisting}
+
+    The logical operators \code{AND}, \code{OR}, and \code{NOT} can be used to combine/invert conditions.
+\end{defn}
+
+\subsection{Set Operations}
+Without \code{ALL}, duplicate rows are eliminated after \code{UNION}, \code{INTERSECT},
+and \code{EXCEPT} (set difference).
+
+With \code{ALL}, for every row $x$ in tables $A$ and $B$ appearing $a$ and $b$ times respectively,
+$x$ will appear these many times in the result:
+\begin{itemize}
+    \keyitem*{\code{UNION}}{$a + b$}
+    \keyitem*{\code{INTERSECT}}{$\min(a, b)$}
+    \keyitem*{\code{EXCEPT}}{$\max(a - b, 0)$}
+\end{itemize}
+
+\subsection{Join Operations}
+\begin{lstlisting}
+SELECT <attributes>
+FROM <r1> [NATURAL] [LEFT / RIGHT / FULL] JOIN
+       <r2> [ON <condition>],
+... -- more joins, query continues
+\end{lstlisting}
+
+If the condition and \code{ON} keyword are omitted, the join is implicitly a natural inner or outer join,
+and the \code{NATURAL} keyword is optional.
+
+\subsection{Composition}
+A \textbf{scalar subquery} is a query that returns a single value (a table with 1 row and 1 column),
+or an empty table which is treated as \code{NULL}.
+
+They are dynamically checked at runtime and can be used as a value in a \code{SELECT}, \code{FROM},
+or \code{WHERE} clause.
+
+There are other types of subqueries for dynamically checking if values are in a set or not:
+\begin{lstlisting}
+...
+WHERE -- subsequent lines are mutually exclusive
+    <expr.> [NOT] IN (<subquery / values>);
+    <expr.> <op.> ALL (<subquery / values>);
+    <expr.> <op.> ANY (<subquery / values>);
+\end{lstlisting}
+
+For \code{ALL} and \code{ANY}, \code{op} can be any comparison operator like \code{=, <, >, <=, >=, <>},
+while \code{IN} uses \code{=} and \code{<>} implicitly (not \code{IS DISTINCT FROM}!).
+
+The subquery must return exactly one column for all the above.
+
+There is also \code{WHERE [NOT] EXISTS (<subquery>)}, which is true if the subquery returns at least one row, which can lead to unusual queries like this:
+
+\begin{lstlisting}
+...
+WHERE EXISTS (
+    SELECT 1 -- any value will do
+    FROM <table>
+    WHERE <condition>
+);
+\end{lstlisting}
+
+Unlike the others, the subquery of \code{EXISTS} does not need to return a single column.

@@ -82,20 +82,6 @@
 % Better code environments
 \usepackage{listings}
 \newcommand{\code}[1]{\texttt{#1}}
-\lstset{
-  language=SQL,
-  showstringspaces=false,
-  columns=flexible,
-  aboveskip=1.5em,
-  belowskip=0.5em,
-  frame=bt,
-  numbers=none,
-  basicstyle={\linespread{1.5}\small\ttfamily},
-  commentstyle={\color{body!60}\textit},
-  breaklines=true,
-  breakatwhitespace=true,
-  tabsize=4
-}
 
 % Custom typesetting values
 \setlength{\abovedisplayskip}{0pt}
@@ -155,6 +141,25 @@
 }{\end{thm*}}
 
 % CS2102 specific
+% postgre keywords
+\lstdefinelanguage{postgre}{%
+  language     = SQL,
+  morekeywords = {OFFSET},
+}
+\lstset{
+  language=postgre,
+  showstringspaces=false,
+  columns=flexible,
+  aboveskip=1.5em,
+  belowskip=0.5em,
+  frame=bt,
+  numbers=none,
+  basicstyle={\linespread{1.5}\small\ttfamily},
+  commentstyle={\color{body!60}\textit},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=4
+}
 
 % outer join symbols
 % https://tex.stackexchange.com/questions/20740/symbols-for-outer-joins
