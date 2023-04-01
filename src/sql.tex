@@ -153,7 +153,7 @@ FROM <regular tables>,
     \end{lstlisting}
 
     Renaming tables is necessary if the same table appears more than once in the \code{FROM} clause.
-    
+
     The \code{AS} keyword is optional when used in \code{FROM} clauses.
 \end{defn}
 
@@ -229,3 +229,186 @@ WHERE EXISTS (
 \end{lstlisting}
 
 Unlike the others, the subquery of \code{EXISTS} does not need to return a single column.
+
+\section{Persistent Stored Modules}
+\subsection{Functions}
+Functions in SQL are used to perform operations on data, and must return at least one value.
+
+\begin{lstlisting}
+CREATE OR REPLACE FUNCTION <name> (<params>)
+    RETURNS <return type> AS $$
+        <body>
+        [LIMIT 1;] -- for RECORDs
+    $$ LANGUAGE sql;
+\end{lstlisting}
+
+Input parameters (constants) are prefixed with \code{IN}, output parameters (uninitialized return values) with \code{OUT}, and input/output parameters (initialized variables) with \code{INOUT}.
+
+The return type can be any arbitrary type, but returning an existing tuple requires the table name as the return type.
+
+However, if the function returns a new tuple, the return type must be a \code{RECORD} or \code{SETOF RECORD}, or equivalently, \code{TABLE}.
+
+Function bodies cannot commit or rollback transactions.
+
+Functions are called using regular \code{SELECT} statements:
+
+\begin{lstlisting}
+SELECT <name>(<parameters>);
+\end{lstlisting}
+
+\begin{defn}{function variables}
+    Variables can be declared in function bodies, and they are local to the function.
+
+    \begin{lstlisting}
+    -- ... $$
+    DECLARE <variable name> <type> [:= <value>];
+    BEGIN <body> END;
+    -- $$ ...
+\end{lstlisting}
+\end{defn}
+
+\begin{defn}{function control flow}
+    If statements and loops are available as well.
+
+    \begin{lstlisting}
+-- ... $$
+    IF <condition> THEN <body>
+    [ELSEIF <condition> THEN <body>]
+    [ELSE <body>]
+    END IF;
+    LOOP [EXIT WHEN <condition>;]
+        <body>;
+    END LOOP;
+-- $$ ...
+\end{lstlisting}
+\end{defn}
+
+\begin{defn}{cursors}
+    Cursors are used to iterate over the result of a query.
+    \begin{lstlisting}
+-- $$ ...
+    DECLARE <cursor name> CURSOR FOR <query>;
+    r RECORD;
+    BEGIN
+        OPEN <cursor name>;
+        LOOP
+            FETCH <cursor name> INTO r;
+            EXIT WHEN NOT FOUND;
+            <body>;
+            [RETURN NEXT;]
+        END LOOP;
+        CLOSE <cursor name>;
+    END
+-- $$ ...
+\end{lstlisting}
+
+    \code{RETURN NEXT;} is used to insert the current value of \code{r} into the result of the function.
+
+    The function return type must be \code{SETOF RECORD} or \code{TABLE} for this to work.
+
+    Variants of \code{FETCH <variant> FROM} with \code{PRIOR}, \code{FIRST}, \code{LAST}, \code{ABSOLUTE <n>} and \code{RELATIVE <n>} are also available.
+\end{defn}
+
+\subsection{Procedures}
+Unlike functions, procedures do not return any values, but they can commit or rollback transactions as long as they are not called within a transaction.
+
+Procedures have access to the same variable, control flow and cursor constructs as functions.
+
+\begin{lstlisting}
+CREATE OR REPLACE PROCEDURE <name> (<params>)
+    RETURNS <return type> AS $$
+        <body>
+    $$ LANGUAGE sql;
+\end{lstlisting}
+
+Since functions do not return values, their parameters are implicitly (and need not be) prefixed with \code{IN}. Nonetheless, \code{INOUT} can be used too.
+
+Procedures are called with the \code{CALL} keyword:
+
+\begin{lstlisting}
+CALL <name>(<parameters>);
+\end{lstlisting}
+
+\subsection{Triggers}
+Triggers are used to execute \textbf{trigger functions} when a certain event occurs.
+
+As the name implies, trigger functions are functions with a return type of \code{TRIGGER}.
+
+To get the database to execute a trigger function, it must be registered as a trigger:
+
+\begin{lstlisting}
+CREATE TRIGGER <name>
+    -- trigger events, can use multiple with OR
+    [<AFTER / BEFORE / INSTEAD OF> -- timing
+        <INSERT / UPDATE / DELETE>] -- operation
+    ON <table>
+    [FOR EACH <ROW / STATEMENT>] -- level
+    [WHEN <condition>]
+    EXECUTE FUNCTION <function name>(<params>);
+\end{lstlisting}
+
+Trigger functions can access the inserted or updated tuple using the \code{NEW} variable, and the replaced or deleted tuple using \code{OLD}.
+
+Other special keywords such as \code{TG\_OP} to get the operation type (e.g. \code{INSERT}) and \code{TG\_TABLE\_NAME}.
+
+\begin{defn}{trigger levels}
+    \code{FOR EACH ROW} invokes the trigger function for each row affected by the operation.
+
+    \code{FOR EACH STATEMENT} is used to perform operations on the entire table, and the trigger function is invoked once per operation.
+
+    This means that statement-level triggers cannot access the \code{NEW} and \code{OLD} variables.
+
+    Neither can the statement's operation be prevented by returning \code{NULL}, unless an exception is raised with \code{RAISE EXCEPTION}.
+\end{defn}
+
+\code{RAISE NOTICE <message>} can be used to print a message to the console, but is not equivalent to \code{RAISE EXCEPTION <message>}.
+
+\begin{defn}{trigger timing - \code{BEFORE}}
+    Returning \code{NULL} will prevent the operation (insertion, updating, deletion) from happening.
+
+    Since the value of \code{OLD} is initialized to \code{NULL}, \code{RETURN OLD} will also prevent the operation from happening \textit{unless} some columns of \code{OLD} are modified.
+\end{defn}
+
+\begin{defn}{trigger timing - \code{AFTER}}
+    The return value of the trigger function has \textbf{no effect} on the operation
+    as it is invoked after the operation has already happened.
+\end{defn}
+
+\begin{defn}{trigger timing - \code{INSTEAD OF} (row-level only)}
+    This may only be defined on views, intended to perform the operation on the underlying table instead of the view.
+
+    Like \code{BEFORE}, returning \code{NULL} will prevent the operation from happening.
+\end{defn}
+
+Triggers are checked after every statement immediately by default, but can be deferred until after the \code{COMMIT} of a transaction.
+
+\begin{lstlisting}
+CREATE CONSTRAINT TRIGGER <name>
+    AFTER <operation> ON <table>
+    FOR EACH ROW
+    DEFERRABLE INITIALLY <DEFERRED / IMMEDIATE>
+    EXECUTE FUNCTION <function name>(<params>);
+\end{lstlisting}
+
+Deferred triggers must be \code{AFTER} operations \code{FOR EACH ROW}.
+
+Since triggers are constraints, any deferrable triggers which are set to \code{INITIALLY IMMEDAITE} can be disabled on a per-transaction basis by changing the trigger constraint.
+
+\begin{lstlisting}
+BEGIN TRANSACTION;
+SET CONSTRAINTS <trigger name> DEFERRED;
+-- ...
+COMMIT;
+-- trigger is deferred until here
+\end{lstlisting}
+
+If there are multiple triggers on the same operation of a table, the following order applies, ties broken by alphabetical order of the trigger name:
+
+\begin{enumerate}
+    \item \code{BEFORE ... FOR EACH STATEMENT} triggers
+    \item \code{BEFORE ... FOR EACH ROW} triggers
+    \item \code{AFTER \phantom{ }... FOR EACH ROW} triggers
+    \item \code{AFTER \phantom{ }... FOR EACH STATEMENT} triggers
+\end{enumerate}
+
+If a row-level \code{BEFORE} trigger function returns \code{NULL}, then all subsequent triggers on the same row are skipped.

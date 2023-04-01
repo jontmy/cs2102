@@ -1,0 +1,61 @@
+\part{Normal Forms}
+A \textbf{normal form} is a definition of minimum requirements to reduce data redundancy and improve data integrity.
+
+Redundancies can lead to \textbf{anomalies} where a primary key attribute violates the constraint of being non-\code{NULL}.
+
+These anomalies can be resolved by \textbf{normalization}.
+
+
+\section{Functional Dependencies}
+A \textbf{functional dependency} is a relationship between two sets of attributes $A$ and $B$ that occur when the value of $B$ can always be determined from the value of $A$.
+
+That is, when $A_1 A_2 \dots A_m \rightarrow B_1 B_2 \dots B_n$, any tuple with the same values for $A_1 A_2 \dots A_m$ will have the same value for $B_1 B_2 \dots B_n$.
+
+\begin{defn}{determining functional dependencies}
+    Intuitively, the $\rightarrow$ can be read as "decides" or "determines".
+
+    Given attributes $A$ and $B$, if $A$ is a key of the relation (all unique values), then $A \rightarrow B$.
+    
+    Another method is to construct a counter-example with 2 tuples which would violate the functional dependency.
+    
+    The attribute with the same value in all rows will be on the LHS of FD, and the other attribute on the RHS. 
+\end{defn}
+
+We can use \textbf{Armstrong's axioms} and some additional rules (denoted with $^\dagger$) to determine if a functional dependency is valid.
+
+\begin{itemize}
+    \keyitem*{augmentation}{if \fd{A}{B} then \fd{AC}{BC} for any $C$}
+    \keyitem*{transitivity}{if \fd{A}{B} and \fd{B}{C} then \fd{A}{C}}
+    \keyitem*{reflexivity}{any set of attributes $\rightarrow$ subset of the attributes}
+    \keyitem*{decomposition$^\dagger$}{if \fd{A}{BC} then \fd{A}{B} and \fd{A}{C}}
+    \keyitem*{union$^\dagger$}{if \fd{A}{B} and \fd{A}{C} then \fd{A}{BC}}
+\end{itemize}
+
+Using these rules is pretty tedious, and we can use \textbf{closures} to simplify the process.
+
+Given a set of functional dependencies, a closure $\{A_1, A_2, \dots, A_n\}^+$ is the set of all attributes that can be determined from $\{A_1, A_2, \dots, A_n\}$.
+
+\begin{defn}{proving functional dependencies \fd{A}{B}}
+    To prove that \fd{A}{B} holds, we must show that $B \in \{A\}^+$.
+
+    To prove that \fd{A}{B} does not hold, we must show that $B \notin \{A\}^+$.
+\end{defn}
+
+\begin{defn}{finding keys}
+    Given a table $R$ and set of functional dependencies, to find the keys:
+    \begin{enumerate}
+        \item Consider every subset of attributes in $R$.
+        \item Derive the closure of each subset.
+        \item Find the superkeys which are the attributes whose closures contain every attribute in $R$.
+        \item Find the keys which are the minimal superkeys.
+    \end{enumerate}
+
+    Some observations to eliminate some of the tedium:
+    \begin{itemize}
+        \item If a set of attributes is a key, then any superset cannot be a key (only a superkey).
+        \item If an attribute is in \textit{none} of the RHSs of the FDs, then it must be part of the key.
+    \end{itemize}
+\end{defn}
+
+If an attribute is part of a key, then it is known as a \textbf{prime attribute}.
+Otherwise, it is a \textbf{non-prime attribute}.

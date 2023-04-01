@@ -141,6 +141,9 @@
 }{\end{thm*}}
 
 % CS2102 specific
+% functional dependencies
+\newcommand{\fd}[2]{${#1} \rightarrow {#2}$}
+
 % postgre keywords
 \lstdefinelanguage{postgre}{%
   language     = SQL,
@@ -196,6 +199,7 @@
     \part{Relational and ER Models}
     \input{relational-model.tex}
     \include{entity-relationship-model.tex}
-    \include{sql.tex}
+    \input{sql.tex}
+    \input{normal-forms.tex}
 \end{multicols*}
 \end{document}
