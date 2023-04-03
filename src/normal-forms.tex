@@ -15,10 +15,10 @@ That is, when $A_1 A_2 \dots A_m \rightarrow B_1 B_2 \dots B_n$, any tuple with 
     Intuitively, the $\rightarrow$ can be read as "decides" or "determines".
 
     Given attributes $A$ and $B$, if $A$ is a key of the relation (all unique values), then $A \rightarrow B$.
-    
+
     Another method is to construct a counter-example with 2 tuples which would violate the functional dependency.
-    
-    The attribute with the same value in all rows will be on the LHS of FD, and the other attribute on the RHS. 
+
+    The attribute with the same value in all rows will be on the LHS of FD, and the other attribute on the RHS.
 \end{defn}
 
 We can use \textbf{Armstrong's axioms} and some additional rules (denoted with $^\dagger$) to determine if a functional dependency is valid.
@@ -59,3 +59,88 @@ Given a set of functional dependencies, a closure $\{A_1, A_2, \dots, A_n\}^+$ i
 
 If an attribute is part of a key, then it is known as a \textbf{prime attribute}.
 Otherwise, it is a \textbf{non-prime attribute}.
+
+
+\section{Boyce-Codd Normal Form (BCNF)}
+A table $R$ is in BCNF if every non-trivial decomposed FD has a superkey on its LHS.
+
+BCNF requires that every non-prime attribute is fully functionally dependent on a superkey.
+
+A \textbf{decomposed FD} is an FD with only one attribute on the RHS.
+Any non-decomposed FD can be decomposed into a set of decomposed FDs.
+
+A \textbf{non-trivial FD} is an FD where no attribute in the RHS appears in the LHS.
+
+\begin{defn}{finding all non-trivial decomposed FDs}
+    Find the closures of every possible subset of attributes in the table, and then pair the LHS with each attribute in the RHS of the closure.
+
+    For example, if $\{ A \}^+ = \{ ABC \}$, then the FDs are \fd{A}{B} and \fd{A}{C}.
+\end{defn}
+
+\begin{defn}{determine if a table is in BCNF}
+    If there exists a non-trivial decomposed FD \fd{A_1 A_2 \dots, A_k}{B_1} on $R$ such that $\{ A_1 A_2 \dots, A_k \}$ is not a superkey, then the table is not in BCNF.
+
+    This is the \textbf{"more but not all"} condition, since the closure $\{ A_1 A_2 \dots, A_k \}^+$ will contain $B_1$ but not all attributes in $R$.
+
+    $^\dagger$ Any table with 2 or fewer attributes is in BCNF.
+\end{defn}
+
+\begin{defn}{table decomposition into BCNF}
+    First find a subset of the attributes $X$ in $R$ such that its closure $X^+$ contains more attributes than $X$ but not all attributes in $R$.
+
+    Repeatedly perform binary splits on $R$ into smaller tables $R_1$ and $R_2$ until it is in BCNF.
+
+    $R_1$ will contain all attributes in $X^+$. \\
+    $R_2$ will contain all attributes in $X$ and the attributes in $R$ but not in $X^+$.
+
+    On the smaller tables, project the original closures of $R$ onto the smaller tables, eliminating the attributes which are no longer in the smaller tables.
+\end{defn}
+
+After decomposition, the original table $R$ can be reconstructed via \textbf{lossless joins} as long as there are common attributes between $R_1$ and $R_2$ which are superkeys on \textit{either} table.
+
+The downside of such BCNF decomposition is that dependencies may not be preserved.
+
+
+\section{Third Normal Form (3NF)}
+3NF is less restrictive than BCNF, and requires that every non-trivial decomposed FD satisfies either of the following conditions:
+
+\begin{enumerate}
+    \item The LHS is a superkey.
+    \item The RHS is a prime attribute, appearing in a key \\ (not allowed by BCNF).
+\end{enumerate}
+
+\begin{defn}{determine if a table is in 3NF}
+    Find all the keys of $R$, and check if every non-trivial decomposed FD satisfies either of the conditions above.
+
+    $^\dagger$ Any table with 2 or fewer attributes or where every attribute appears in a key is in 3NF.
+\end{defn}
+
+Given a set of FDs $S$, a \textbf{minimal basis} of $S$ is a simplified set of FDs that retains all the dependencies in $S$.
+
+Such minimal bases obey the following conditions:
+\begin{enumerate}
+    \item Every FD in the basis can be derived from $S$ and vice versa.
+    \item Every FD in the basis is non-trivial and decomposed.
+    \item No FDs in the basis is redundant.
+    \item None of the attributes on the LHS of an FD in the basis is redundant.
+\end{enumerate}
+
+\begin{defn*}{finding a minimal basis}
+    \begin{enumerate}
+        \item Decompose the FDs so that the RHSs only contain 1 attribute.
+        \item For each FD \fd{AB}{C}, compute the closures of $A$ and $B$. If $C \in A^+$ or $C \in B^+$, then the FD is redundant and can be removed. \\ (If an FD has more than 2 attributes, e.g. \fd{ABC}{D}, then check every possible subset of the LHS for redundancy.)
+        \item For every FD \fd{A}{B}, compute the closure of $A$. For every attribute $C$ in the closure, any other FD which has $C$ on its RHS but not $A$ on its LHS is redundant and can be removed.
+    \end{enumerate}
+\end{defn*}
+
+\begin{defn}{table decomposition into 3NF}
+    Given a table $R$ and a set of FDs $S$, first find a minimal basis.
+
+    Merge FDs with the same LHSs using the union rule, i.e. \fd{A}{B} and \fd{A}{C} becomes \fd{A}{BC}.
+
+    Create a table for each remaining FD using the attributes of both sides of the FD, i.e. \fd{ABC}{D} yields $R'(A, B, C, D)$.
+
+    If none of the tables contain a key of $R$, create a table that contains any key of $R$, i.e. for a table $R(A, B, C, D)$ with key $AC$ decomposed into $R_1(A, B)$ and $R_2(C, D)$, create a new table $R_3(A, C)$.
+
+    Remove redundant tables where the attributes of a table are a subset of another table.
+\end{defn}
