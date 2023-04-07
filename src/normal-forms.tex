@@ -117,20 +117,23 @@ The downside of such BCNF decomposition is that dependencies may not be preserve
 
 Given a set of FDs $S$, a \textbf{minimal basis} of $S$ is a simplified set of FDs that retains all the dependencies in $S$.
 
-Such minimal bases obey the following conditions:
-\begin{enumerate}
-    \item Every FD in the basis can be derived from $S$ and vice versa.
-    \item Every FD in the basis is non-trivial and decomposed.
-    \item No FDs in the basis is redundant.
-    \item None of the attributes on the LHS of an FD in the basis is redundant.
-\end{enumerate}
-
 \begin{defn*}{finding a minimal basis}
     \begin{enumerate}
-        \item Decompose the FDs so that the RHSs only contain 1 attribute.
-        \item For each FD \fd{AB}{C}, compute the closures of $A$ and $B$. If $C \in A^+$ or $C \in B^+$, then the FD is redundant and can be removed. \\ (If an FD has more than 2 attributes, e.g. \fd{ABC}{D}, then check every possible subset of the LHS for redundancy.)
-        \item For every FD \fd{A}{B}, compute the closure of $A$. For every attribute $C$ in the closure, any other FD which has $C$ on its RHS but not $A$ on its LHS is redundant and can be removed.
+        \item Decompose the given FDs so that every FD has only 1 attribute on the RHS.
+        \item We now remove extraneous attributes on the LHS of every FD with at least 2 attributes on the LHS in the form \fd{XY}{Z}.
+        \begin{enumerate}
+            \item Find the closure $X^+$.
+            \item If $Y \in X^+$ and $Z \in X^+$, then remove $Y$ from the LHS.
+            \item Otherwise, find the closure $Y^+$. If $X \in Y^+$ and $Z \in Y^+$, then remove $X$ from the LHS.
+        \end{enumerate}
+        \item If an FD has more than 2 attributes, e.g. \fd{ABC}{D}, then check every possible subset of the LHS for redundancy.
+        \item With extraneous attributes removed, we now eliminate FDs that are redundant.
+        \begin{enumerate}
+            \item For each FD, compute the closure $FD^+$ of the LHS as if the FD does not exist.
+            \item If the RHS of the FD is in $FD^+$, then the FD is removed.
+        \end{enumerate}
     \end{enumerate}
+    $^\dagger$ For every attribute in $R$, if one and only one FD contains that attribute on the RHS, then that FD is not redundant (concerning step 4.).
 \end{defn*}
 
 \begin{defn}{table decomposition into 3NF}
